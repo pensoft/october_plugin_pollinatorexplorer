@@ -1,0 +1,6 @@
+plugin:
+    name: 'pensoft.pollinatorexplorer::lang.plugin.name'
+    description: 'pensoft.pollinatorexplorer::lang.plugin.description'
+    author: Pensoft
+    icon: icon-map-pin
+    homepage: ''

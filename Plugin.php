@@ -19,7 +19,7 @@ class Plugin extends PluginBase
             'name'        => 'PollinatorExplorer',
             'description' => 'No description provided yet...',
             'author'      => 'Pensoft',
-            'icon'        => 'icon-leaf'
+            'icon'        => 'icon-map-pin'
         ];
     }
 
@@ -85,7 +85,7 @@ class Plugin extends PluginBase
             'pollinatorexplorer' => [
                 'label'       => 'PollinatorExplorer',
                 'url'         => Backend::url('pensoft/pollinatorexplorer/mycontroller'),
-                'icon'        => 'icon-leaf',
+                'icon'        => 'icon-map-pin',
                 'permissions' => ['pensoft.pollinatorexplorer.*'],
                 'order'       => 500,
             ],

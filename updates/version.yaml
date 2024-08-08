@@ -1,0 +1,7 @@
+1.0.1: First version of PollinatorExplorer
+1.0.2:
+    - 'Created table pensoft_pollinatorexplorer_taxons'
+    - create_taxons_table.php
+1.0.3:
+    - 'Created table pensoft_pollinatorexplorer_classifications'
+    - create_classifications_table.php

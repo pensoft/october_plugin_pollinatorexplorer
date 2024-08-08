@@ -1,0 +1,91 @@
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/fomantic-ui@2.9.3/dist/semantic.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.9.3/dist/semantic.min.css" rel="stylesheet">
+</head>
+
+<div class="container">
+
+    <form id="category-form">
+        <div class="row">
+            <div class="col-md-12 col-xs-12 mb-3">
+                <label for="taxon-search" class="form-label">Search Taxon</label>
+                <input type="text" id="taxon-search" class="form-control" placeholder="Search by taxon name">
+            </div>
+            <div class="col-md-3 col-xs-12 mb-3">
+                <label for="country-select" class="form-label">Country</label>
+                <div class="custom-multiselect" id="country-select-wrapper">
+                    <div class="custom-multiselect-placeholder" id="country-placeholder">Select Countries</div>
+                    <div class="custom-multiselect-options" id="country-options">
+                        {% for country in country_options %}
+                        <label><input type="checkbox" value="{{ country }}"> {{ country }}</label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-xs-12 mb-3">
+                <label for="family-select" class="form-label">Family</label>
+                <div class="custom-multiselect" id="family-select-wrapper">
+                    <div class="custom-multiselect-placeholder" id="family-placeholder">Select Families</div>
+                    <div class="custom-multiselect-options" id="family-options">
+                        {% for family in family_options %}
+                        <label><input type="checkbox" value="{{ family }}"> {{ family }}</label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-xs-12 mb-3">
+                <label for="genus-select" class="form-label">Genus</label>
+                <div class="custom-multiselect" id="genus-select-wrapper">
+                    <div class="custom-multiselect-placeholder" id="genus-placeholder">Select Genera</div>
+                    <div class="custom-multiselect-options" id="genus-options">
+                        {% for genus in genus_options %}
+                        <label><input type="checkbox" value="{{ genus }}"> {{ genus }}</label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-xs-12 mb-3">
+                <label for="tribe-select" class="form-label">Tribe</label>
+                <div class="custom-multiselect" id="tribe-select-wrapper">
+                    <div class="custom-multiselect-placeholder" id="tribe-placeholder">Select Tribes</div>
+                    <div class="custom-multiselect-options" id="tribe-options">
+                        {% for tribe in tribe_options %}
+                        <label><input type="checkbox" value="{{ tribe }}"> {{ tribe }}</label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="col-xs-12">
+        <div class="row">
+            <div class="col-xs-12">
+                <button class="danger" id="reset-filters-button">Reset</button>
+            </div>
+            <div id="results" class="col-md-3 col-xs-12">
+
+            </div>
+            <div class="col-md-9 col-xs-12">
+                <div class="row">
+                    <div class="col-xs-12">
+                        <div id="selected-taxons" class="row"></div>
+                    </div>
+                </div>
+                    <div id="map" style="display: inline-block;"></div>
+                    <div class="year-control">
+                        <div>&nbsp;</div>
+                        <div class="col-xs-12"><label for="Show null years"><input id="null-years" type="checkbox" value="1"> Show records without year</label></div>
+                        <div style="text-align: center;">Years: <output id="year_text">0</output></div>
+                        <div class="ui container"><div class="ui labeled ticked range slider" id="slider-range-minmax"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    </div>
+</div>

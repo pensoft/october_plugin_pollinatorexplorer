@@ -1,0 +1,68 @@
+#map {
+    position: relative; 
+    top: 0; 
+    right: 0; 
+    bottom: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 500px;
+}
+
+#year_text {
+  border-radius: 10px;
+  background-color: blanchedalmond;
+  padding: 5px 10px;
+}
+
+#category-form {
+    width: 100%;
+}
+
+#results {
+    height: 600px;
+    overflow: auto;
+}
+#results ul {
+    list-style-type: none;
+    padding: 0 !important;
+}
+.custom-multiselect {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    cursor: pointer;
+}
+
+.custom-multiselect-placeholder {
+    padding: 8px 10px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: left;
+}
+
+.custom-multiselect-options {
+    display: none;
+    position: absolute;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 2000 !important;
+    padding: 8px 10px;
+}
+
+.custom-multiselect-options label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.custom-multiselect-options input {
+    margin-right: 8px;
+}
+
+.custom-multiselect.active .custom-multiselect-options {
+    display: block;
+}

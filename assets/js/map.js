@@ -6,6 +6,7 @@ $(document).ready(function () {
     }
 
     const map = L.map('map', { maxZoom: 13 });
+    
     const colors = {
         "blue": { "color": "#2A81CB" },
         "gold": { "color": "#FFD326" },
@@ -21,25 +22,115 @@ $(document).ready(function () {
     const key = 'EKUb4Bm0PKKlbqC26vF8';
     const yearTextElement = $('#year_text');
     const yearControl = $('.year-control');
+    const loader = $('#loader');
+    
+    $('#results').hide();
+    $('.tooltip').hide();
+    
+    L.maptilerLayer({ apiKey: key, style: "landscape" }).addTo(map);
+    map.setView([0, 0], 2);
 
     let markers = null;
 
-    async function fetchData(url) {
-        return await fetch(url, {
+    /* Logic for handling the dynamic color for the taxon legend */
+    const selectedColors = [];
+
+    function moveTaxonToSelected(taxon, container) {
+        // If the container already has 4 taxons, alert the user and do not add more
+        if (container.children().length >= selectLimit) {
+            alert('You can select a maximum of 4 taxons.');
+            return;
+        }
+    
+        if (container.find(`.selected-taxon[data-taxon="${taxon}"]`).length > 0) {
+            return;
+        }
+    
+        const nextColor = getNextAvailableColor();
+    
+        selectedColors.push(nextColor);
+    
+        const taxonElement = `
+            <div class="selected-taxon" data-taxon="${taxon}">
+                <span class="color-dot" style="background-color: ${colors[nextColor].color};"></span>
+                ${taxon} <a class="remove-taxon">×</a>
+            </div>`;
+        container.append(taxonElement);
+        updateUrlParams('q', taxon, 'add');
+    }
+    
+    function removeTaxonFromSelected(taxon) {
+        const taxonElement = $(`#selected-taxons .selected-taxon[data-taxon="${taxon}"]`);
+        if (taxonElement.length > 0) {
+            const colorToRemove = getAssignedColor(taxonElement);
+            taxonElement.remove();
+    
+            selectedColors.splice(selectedColors.indexOf(colorToRemove), 1);
+    
+            reassignTaxonColors();
+            updateUrlParams('q', taxon, 'remove');
+        }
+    }
+    
+    function getAssignedColor(taxonElement) {
+        return Object.keys(colors).find(color => colors[color].color === taxonElement.find('.color-dot').css('background-color'));
+    }
+    
+    function getNextAvailableColor() {
+        const availableColors = Object.keys(colors).filter(color => !selectedColors.includes(color));
+        return availableColors[0];
+    }
+    
+    function reassignTaxonColors() {
+        const taxonElements = $('#selected-taxons .selected-taxon');
+        selectedColors.length = 0;
+    
+        taxonElements.each((index, element) => {
+            const taxonElement = $(element);
+    
+            const nextColor = getNextAvailableColor();
+            selectedColors.push(nextColor);
+    
+            taxonElement.find('.color-dot').css('background-color', colors[nextColor].color);
+        });
+    }
+    
+
+    function showLoader() {
+        loader.show();
+    }
+
+    function hideLoader() {
+        loader.hide();
+    }
+
+    function fetchData(url) {
+        if (url.includes('explorer')) {
+            loader.show();
+        }
+    
+        return fetch(url, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
         .then(response => {
+            if (url.includes('explorer')) {
+                loader.hide();
+            }
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
             return response.json();
         })
         .catch(error => {
+            if (url.includes('explorer')) {
+                loader.hide();
+            }
             console.error('Fetch error:', error);
         });
     }
+    
 
     function handleResponse(data) {
         if (markers) {
@@ -52,7 +143,7 @@ $(document).ready(function () {
         yearTextElement.text(`${meta.year_min} - ${meta.year_max}`);
 
         $('.ui.range.slider').slider({
-            restrictedLabels: getOptimizedLabels(meta.taxons_years.sort(), meta.first_taxon_year, meta.last_taxon_year),
+            restrictedLabels: [...meta.taxons_years.sort()].filter(value => value % 10 === 0) || [],
             min: meta.first_taxon_year,
             max: meta.last_taxon_year,
             start: meta.year_min,
@@ -61,7 +152,7 @@ $(document).ready(function () {
             autoAdjustLabels: true,
             onChange: (index, start_value, end_value) => {
                 const url = new URL(location.href);
-                const range = (start_value === end_value) ? start_value : `${start_value},${end_value}`;
+                let range = (start_value === end_value) ? start_value : `${start_value},${end_value}`;
                 url.searchParams.set("year_range", range);
                 pushUrl(url);
             },
@@ -69,20 +160,6 @@ $(document).ready(function () {
                 yearTextElement.text((start_value === end_value) ? start_value : `${start_value} - ${end_value}`);
             },
         });
-
-        function getOptimizedLabels(years, firstYear, lastYear) {
-            const labelFrequency = Math.ceil(years.length / 5);
-            let labels = years.filter((year, index) => index % labelFrequency === 0);
-
-            // Ensure first and last years are always labeled
-            if (!labels.includes(firstYear)) labels.unshift(firstYear); {
-                labels.unshift(firstYear);
-            }
-            if (!labels.includes(lastYear)) {
-                labels.push(lastYear);
-            }
-            return labels;
-        }
 
         map.setView([meta.lat_average, meta.lng_average], 3);
         markers = createMapMarkers(records, meta.titles_aggregated || [], meta);
@@ -105,7 +182,7 @@ $(document).ready(function () {
                 weight: 7,
             },
             hideLegend: false,
-            getLegend: (title, color, percentage, value) => 
+            getLegend: (title, color, percentage, value) =>
                 `<span style="border: 1px solid ${color}; background-color:rgba(255, 255, 255, 0.7); border-left-width:15px; padding:1px;">${title}:&nbsp;${value}</span>`
         });
 
@@ -154,7 +231,6 @@ $(document).ready(function () {
     function response() {
         const urlParams = new URLSearchParams(window.location.search);
 
-        // If no query parameters are present, show the default map
         if (!urlParams.has('q') || !urlParams.get('q').trim()) {
             if (markers) {
                 map.removeLayer(markers);
@@ -165,13 +241,12 @@ $(document).ready(function () {
             urlParams.delete('null_years');
             history.replaceState({}, '', `${location.pathname}?${urlParams.toString()}`);
 
-
             yearTextElement.text('');
             yearControl.hide();
 
             L.maptilerLayer({ apiKey: key, style: "landscape" }).addTo(map);
             map.setView([0, 0], 2);
-            
+
             return;
         }
 
@@ -181,7 +256,6 @@ $(document).ready(function () {
             if (data) handleResponse(data);
         });
     }
-
 
     function updateUrlParams(param, value, action) {
         const url = new URL(window.location.href);
@@ -204,35 +278,8 @@ $(document).ready(function () {
     }
 
     function pushUrl(url) {
-        // Reorder the parameters to ensure 'q' comes before 'year_range'
-        const q = url.searchParams.get('q');
-        const yearRange = url.searchParams.get('year_range');
-        const nullYears = $('#null-years').is(':checked');
-
-        url.searchParams.delete('q');
-        url.searchParams.delete('year_range');
-        url.searchParams.delete('null_years');
-        
-        if (q && q.trim()) {
-            url.searchParams.append('q', q);
-
-            if (yearRange) {
-                url.searchParams.append('year_range', yearRange);
-            }
-
-            if (nullYears) {
-                    url.searchParams.append('null_years', 'true');
-            }
-        }
-
-
         history.pushState({}, '', url);
         response();
-    }
-
-    function init() {
-        fetchResults();
-        updateSelectedTaxons();
     }
 
     function updateSelectedTaxons() {
@@ -244,57 +291,64 @@ $(document).ready(function () {
         selectedTaxons.forEach(taxon => moveTaxonToSelected(taxon, selectedTaxonsContainer));
     }
 
-    function moveTaxonToSelected(taxon, container) {
-        if (container.find(`.selected-taxon[data-taxon="${taxon}"]`).length > 0 || container.children().length >= selectLimit) {
-            return;
-        }
+    // function moveTaxonToSelected(taxon, container) {
+    //     if (container.find(`.selected-taxon[data-taxon="${taxon}"]`).length > 0 || container.children().length >= selectLimit) {
+    //         return;
+    //     }
 
-        const taxonElement = `<div class="selected-taxon" data-taxon="${taxon}">${taxon} <button class="remove-taxon">Remove</button></div>`;
-        container.append(taxonElement);
-        updateUrlParams('q', taxon, 'add');
-    }
+    //     const taxonElement = `<div class="selected-taxon" data-taxon="${taxon}">${taxon} <a class="remove-taxon">×</a></div>`;
+    //     container.append(taxonElement);
+    //     updateUrlParams('q', taxon, 'add');
+    // }
 
     function resetFilters() {
-        $('#category-form input[type="checkbox"]').prop('checked', false);
+        $('#category-form select').each(function () {
+            this.selectize.clear();
+        });
         $('#taxon-search').val('');
         fetchResults();
     }
 
-    function removeTaxonFromSelected(taxon) {
-        $(`#selected-taxons .selected-taxon[data-taxon="${taxon}"]`).remove();
-        updateUrlParams('q', taxon, 'remove');
-    }
+    // function removeTaxonFromSelected(taxon) {
+    //     $(`#selected-taxons .selected-taxon[data-taxon="${taxon}"]`).remove();
+    //     updateUrlParams('q', taxon, 'remove');
+    // }
 
     function fetchResults() {
-        const selectedCountries = $('#country-options input:checked').map((_, el) => $(el).val()).get();
-        const selectedGenera = $('#genus-options input:checked').map((_, el) => $(el).val()).get();
-        const selectedFamilies = $('#family-options input:checked').map((_, el) => $(el).val()).get();
-        const selectedTribes = $('#tribe-options input:checked').map((_, el) => $(el).val()).get();
+        const selectedCountries = $('#country-select').val() || [];
+        const selectedFamilies = $('#family-select').val() || [];
+        const selectedGenera = $('#genus-select').val() || [];
+        const selectedTribes = $('#tribe-select').val() || [];
         const searchTerm = $('#taxon-search').val().trim();
+
+        if (!searchTerm && selectedCountries.length === 0 && selectedFamilies.length === 0 && selectedGenera.length === 0 && selectedTribes.length === 0) {
+            $('#results').hide();
+            $('.tooltip').hide();
+            return;
+        }
 
         const query = {
             countries: selectedCountries,
-            genera: selectedGenera,
             families: selectedFamilies,
+            genera: selectedGenera,
             tribes: selectedTribes,
             search: searchTerm,
         };
 
         fetchData(`api/search?${$.param(query)}`).then(response => {
             const resultsContainer = $('#results').empty();
-
             if (response.taxons && response.taxons.length > 0) {
-                const resultsList = $('<ul>').append(`<h3>Fetched ${response.results} taxons:</h3>`);
+                const resultsList = $('<ul>');
                 $.each(response.taxons, (index, taxon) => {
-                    const listItem = $('<li>').append(
-                        $('<a href="#">').text(taxon).on('click', function (e) {
-                            e.preventDefault();
-                            moveTaxonToSelected(taxon, $('#selected-taxons'));
-                        })
-                    );
+                    const listItem = $('<li>').text(taxon).on('click', function (e) {
+                        e.preventDefault();
+                        moveTaxonToSelected(taxon, $('#selected-taxons'));
+                    });
                     resultsList.append(listItem);
                 });
                 resultsContainer.append(resultsList);
+                $('#results').show();
+                $('.tooltip').show();
             } else {
                 resultsContainer.append('<p>No results found.</p>');
             }
@@ -302,14 +356,25 @@ $(document).ready(function () {
             console.error('Error fetching results:', error);
             $('#results').html('<p>An error occurred while fetching results.</p>');
         });
+        
     }
 
-    // Event listeners
+    function initSelectize() {
+        $('#country-select, #family-select, #genus-select, #tribe-select').selectize({
+            maxItems: selectLimit,
+            plugins: ['remove_button'],
+            onChange: fetchResults
+        });
+    }
+
+    // $('#results li a').on('click', function (e) {
+        
+    // });
     $('#selected-taxons').on('click', '.remove-taxon', function () {
         const taxon = $(this).parent().data('taxon');
         removeTaxonFromSelected(taxon);
     });
-    
+
     $('#null-years').prop('checked', true);
     $('#null-years').on('change', function() {
         const url = new URL(window.location.href);
@@ -318,19 +383,6 @@ $(document).ready(function () {
 
     $('#taxon-search').on('input', fetchResults);
     $('#reset-filters-button').on('click', resetFilters);
-
-    $('.custom-multiselect-placeholder').on('click', function () {
-        $(this).closest('.custom-multiselect').toggleClass('active');
-    });
-
-    $('.custom-multiselect-options input').on('change', function () {
-        const parent = $(this).closest('.custom-multiselect');
-        const selectedOptions = parent.find('input:checked').map((_, el) => $(el).val()).get();
-        const placeholder = parent.find('.custom-multiselect-placeholder');
-
-        placeholder.text(selectedOptions.length === 0 ? 'Select options' : `${selectedOptions.length} selected`);
-        fetchResults();
-    });
 
     $(document).on('click', function (e) {
         if (!$(e.target).closest('.custom-multiselect').length) {
@@ -342,5 +394,6 @@ $(document).ready(function () {
         updateSelectedTaxons();
     });
 
-    init();
+    initSelectize();
+    updateSelectedTaxons();
 });

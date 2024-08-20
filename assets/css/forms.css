@@ -9,8 +9,10 @@
 }
 
 #year_text {
+  text-align: center;
   border-radius: 10px;
-  background-color: blanchedalmond;
+  background-color: #E7F2F1;
+  color: #00A89D;
   padding: 5px 10px;
 }
 
@@ -50,7 +52,7 @@
     width: 100%;
     max-height: 200px;
     overflow-y: auto;
-    z-index: 2000 !important;
+    z-index: 1000 !important;
     padding: 8px 10px;
 }
 

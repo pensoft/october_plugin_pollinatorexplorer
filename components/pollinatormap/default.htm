@@ -1,91 +1,78 @@
 <head>
     <script src="https://cdn.jsdelivr.net/npm/fomantic-ui@2.9.3/dist/semantic.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.9.3/dist/semantic.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.13.3/js/standalone/selectize.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.13.3/css/selectize.default.min.css" />
 </head>
 
 <div class="container">
-
     <form id="category-form">
-        <div class="row">
-            <div class="col-md-12 col-xs-12 mb-3">
-                <label for="taxon-search" class="form-label">Search Taxon</label>
-                <input type="text" id="taxon-search" class="form-control" placeholder="Search by taxon name">
+        <div class="row filters">
+            <div class="col-md-12 col-xs-12 mb-3 search-field">
+                <input type="text" id="taxon-search" class="form-control taxon-search" placeholder="Search by taxon name...">
             </div>
-            <div class="col-md-3 col-xs-12 mb-3">
-                <label for="country-select" class="form-label">Country</label>
-                <div class="custom-multiselect" id="country-select-wrapper">
-                    <div class="custom-multiselect-placeholder" id="country-placeholder">Select Countries</div>
-                    <div class="custom-multiselect-options" id="country-options">
-                        {% for country in country_options %}
-                        <label><input type="checkbox" value="{{ country }}"> {{ country }}</label>
-                        {% endfor %}
-                    </div>
-                </div>
+            <div class="col-md col-xs-12 country-field">
+                <select id="country-select" multiple placeholder="Country">
+                    {% for country in country_options %}
+                    <option value="{{ country }}">{{ country }}</option>
+                    {% endfor %}
+                </select>
             </div>
 
-            <div class="col-md-3 col-xs-12 mb-3">
-                <label for="family-select" class="form-label">Family</label>
-                <div class="custom-multiselect" id="family-select-wrapper">
-                    <div class="custom-multiselect-placeholder" id="family-placeholder">Select Families</div>
-                    <div class="custom-multiselect-options" id="family-options">
-                        {% for family in family_options %}
-                        <label><input type="checkbox" value="{{ family }}"> {{ family }}</label>
-                        {% endfor %}
-                    </div>
-                </div>
+            <div class="col-md col-xs-12 family-field">
+                <select id="family-select" multiple placeholder="Family">
+                    {% for family in family_options %}
+                    <option value="{{ family }}">{{ family }}</option>
+                    {% endfor %}
+                </select>
             </div>
 
-            <div class="col-md-3 col-xs-12 mb-3">
-                <label for="genus-select" class="form-label">Genus</label>
-                <div class="custom-multiselect" id="genus-select-wrapper">
-                    <div class="custom-multiselect-placeholder" id="genus-placeholder">Select Genera</div>
-                    <div class="custom-multiselect-options" id="genus-options">
-                        {% for genus in genus_options %}
-                        <label><input type="checkbox" value="{{ genus }}"> {{ genus }}</label>
-                        {% endfor %}
-                    </div>
-                </div>
+            <div class="col-md col-xs-12 genus-field">
+                <select id="genus-select" multiple placeholder="Genus">
+                    {% for genus in genus_options %}
+                    <option value="{{ genus }}">{{ genus }}</option>
+                    {% endfor %}
+                </select>
             </div>
 
-            <div class="col-md-3 col-xs-12 mb-3">
-                <label for="tribe-select" class="form-label">Tribe</label>
-                <div class="custom-multiselect" id="tribe-select-wrapper">
-                    <div class="custom-multiselect-placeholder" id="tribe-placeholder">Select Tribes</div>
-                    <div class="custom-multiselect-options" id="tribe-options">
-                        {% for tribe in tribe_options %}
-                        <label><input type="checkbox" value="{{ tribe }}"> {{ tribe }}</label>
-                        {% endfor %}
-                    </div>
-                </div>
+            <div class="col-md col-xs-12 tribe-field">
+                <select id="tribe-select" multiple placeholder="Tribe">
+                    {% for tribe in tribe_options %}
+                    <option value="{{ tribe }}">{{ tribe }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 col-xs-12 clear-filter end-xs">
+                <a class="danger" id="reset-filters-button">Clear filters</a>
             </div>
         </div>
     </form>
 
     <div class="col-xs-12">
-        <div class="row">
-            <div class="col-xs-12">
-                <button class="danger" id="reset-filters-button">Reset</button>
-            </div>
-            <div id="results" class="col-md-3 col-xs-12">
-
-            </div>
-            <div class="col-md-9 col-xs-12">
-                <div class="row">
-                    <div class="col-xs-12">
-                        <div id="selected-taxons" class="row"></div>
-                    </div>
+        <div class="row center-xs">
+            <div id="loader" style="display: none;">
+                <div class="loader-inner">
+                    <div class="spinner"></div>
                 </div>
-                    <div id="map" style="display: inline-block;"></div>
-                    <div class="year-control">
-                        <div>&nbsp;</div>
-                        <div class="col-xs-12"><label for="Show null years"><input id="null-years" type="checkbox" value="1"> Show records without year</label></div>
-                        <div style="text-align: center;">Years: <output id="year_text">0</output></div>
-                        <div class="ui container"><div class="ui labeled ticked range slider" id="slider-range-minmax"></div></div>
+            </div>
+            <div class="col-md col-xs-12 tooltip"><span>* Select up to four taxons</span></div>
+
+            <div class="col-md-9 col-xs-12">
+                <div id="selected-taxons" class="row"></div>
+            </div>
+
+            <div id="results" class="col-md-3 col-xs-12"></div>
+            <div class="col-md-9 col-xs-12">
+                <div id="map" style="display: inline-block;"></div>
+                <div class="year-control">
+                    <div>&nbsp;</div>
+                    <div class="row">
+                        <div class="col-md-4 col-xs-12"><label for="Show null years"><input id="null-years" type="checkbox" value="1"> Show records without year</label></div>
+                        <div class="col-md-4 col-xs-12 center-xs years-txt">Years: <output id="year_text">0</output></div>
                     </div>
+                    <div class="year-container"><div class="ui labeled ticked range slider" id="slider-range-minmax"></div></div>
                 </div>
             </div>
         </div>
-    </div>
-    
     </div>
 </div>

@@ -5,3 +5,6 @@
 1.0.3:
     - 'Created table pensoft_pollinatorexplorer_classifications'
     - create_classifications_table.php
+1.0.4:
+    - 'Updated table pensoft_pollinatorexplorer_taxons'
+    - update_taxons_table.php
